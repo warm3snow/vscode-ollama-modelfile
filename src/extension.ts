@@ -234,22 +234,25 @@ PARAMETER repeat_penalty 1.1`;
 
 			const selectedModelfile = await vscode.window.showQuickPick(modelfileItems, {
 				placeHolder: 'Select a Modelfile',
-				title: 'Create Model from Modelfile'
+				title: 'Create Model'
 			});
 
 			if (!selectedModelfile) {
 				return;
 			}
 
+			const defaultModelName = path.basename(selectedModelfile.label, '.modelfile').toLowerCase() + ':0.0.1';
+
 			const modelNameInput = await vscode.window.showInputBox({
-				prompt: 'Enter model name and optional tag (e.g., mymodel:1.0)',
-				placeHolder: 'modelname[:tag]',
+				prompt: 'Enter model name and tag',
+				placeHolder: 'modelname:tag',
+				value: defaultModelName,
 				validateInput: (value) => {
 					if (!value) {
 						return 'Model name cannot be empty';
 					}
 					if (!/^[a-zA-Z0-9_-]+(?::[a-zA-Z0-9._-]+)?$/.test(value)) {
-						return 'Invalid model name format. Use modelname[:tag]';
+						return 'Invalid model name format. Use modelname:tag';
 					}
 					return null;
 				}
