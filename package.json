@@ -1,8 +1,12 @@
 {
-  "name": "vscode-ollama-modelfile",
-  "displayName": "vscode-ollama-modelfile",
+  "name": "ollama-modelfile",
+  "displayName": "Ollama Modelfile",
   "description": "Ollama Modelfile support for VS Code",
   "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/warm3snow/ollama-modelfile.git"
+  },
   "engines": {
     "vscode": "^1.97.0"
   },

@@ -1,20 +1,22 @@
-# vscode-ollama-modelfile README
+# Ollama Modelfile
 
-This is the README for your extension "vscode-ollama-modelfile". After writing up a brief description, we recommend including the following sections.
+VSCode extension for Ollama Modelfile support.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
-
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+* Syntax highlighting for Modelfile
+* Command snippets and autocompletion
+* Modelfile template creation
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+* Visual Studio Code 1.80.0 or newer
+
+## Usage
+
+1. Create a new file with name `Modelfile`
+2. Start typing Ollama commands to get autocompletion
+3. Use Command Palette to create new Modelfile from template
 
 ## Extension Settings
 
