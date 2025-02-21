@@ -16,27 +16,29 @@
     "Other"
   ],
   "activationEvents": [
-    "onStartupFinished",
-    "onCommand:ollama-modelfile.createModelfile",
-    "onCommand:ollama-modelfile.createModel",
-    "onCommand:ollama-modelfile.runModel"
+    "onStartupFinished"
   ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "ollama-modelfile.createModelfile",
-        "title": "Create Modelfile Template",
+        "title": "Create Modelfile",
         "category": "Ollama Modelfile"
       },
       {
         "command": "ollama-modelfile.createModel",
-        "title": "Create Model from Modelfile",
+        "title": "Create Model",
         "category": "Ollama Modelfile"
       },
       {
         "command": "ollama-modelfile.runModel",
         "title": "Run Model",
+        "category": "Ollama Modelfile"
+      },
+      {
+        "command": "ollama-modelfile.deleteModel",
+        "title": "Delete Model",
         "category": "Ollama Modelfile"
       }
     ]

@@ -1,5 +1,3 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -8,19 +6,15 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
 async function findModelfiles(workspaceFolder: vscode.WorkspaceFolder): Promise<vscode.Uri[]> {
 	const pattern = new vscode.RelativePattern(workspaceFolder, '**/*.modelfile');
 	const files = await vscode.workspace.findFiles(pattern, '**/node_modules/**');
 	
-	// 也搜索名为 'Modelfile' 的文件（不带后缀）
 	const modelFiles = await vscode.workspace.findFiles(new vscode.RelativePattern(workspaceFolder, '**/Modelfile'), '**/node_modules/**');
 	
 	return [...files, ...modelFiles];
 }
 
-// 在文件顶部添加 OutputChannel 管理类
 class OutputChannelManager {
 	private static instance: OutputChannelManager;
 	private modelRunChannel?: vscode.OutputChannel;
@@ -49,25 +43,20 @@ class OutputChannelManager {
 	}
 }
 
-// 修改清理文本的辅助函数
 function cleanOutput(text: string): string {
 	return text
-		.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '') // 移除 ANSI 转义序列
-		.replace(/\[(\d+|k)m/g, '')           // 移除颜色代码
-		.replace(/\[\?25[hl]/g, '')           // 移除光标显示/隐藏控制
-		.replace(/\[2K/g, '')                 // 移除行清除控制
-		.replace(/\r/g, '')                   // 移除回车符
-		.replace(/\u001b/g, '')               // 移除 ESC 字符
-		.replace(/\[25l|\[25h|\[2K|\[1G/g, ''); // 移除其他控制序列
+		.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
+		.replace(/\[(\d+|k)m/g, '')
+		.replace(/\[\?25[hl]/g, '')
+		.replace(/\[2K/g, '')
+		.replace(/\r/g, '')
+		.replace(/\u001b/g, '')
+		.replace(/\[25l|\[25h|\[2K|\[1G/g, '');
 }
 
 export function activate(context: vscode.ExtensionContext) {
-
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
 	console.log('Congratulations, your extension "vscode-ollama-modelfile" is now active!');
 
-	// 每次执行命令时都创建新的命令处理器
 	context.subscriptions.push(
 		vscode.commands.registerCommand('ollama-modelfile.createModelfile', async () => {
 			const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -76,7 +65,6 @@ export function activate(context: vscode.ExtensionContext) {
 				return;
 			}
 
-			// 让用户输入文件名
 			const fileName = await vscode.window.showInputBox({
 				prompt: 'Enter Modelfile name',
 				placeHolder: 'e.g., chatbot, coder, assistant',
@@ -95,7 +83,6 @@ export function activate(context: vscode.ExtensionContext) {
 				return;
 			}
 
-			// 让用户选择模板类型
 			const templateType = await vscode.window.showQuickPick([
 				{ label: 'Basic Model', description: 'Basic model with essential settings' },
 				{ label: 'Chat Assistant', description: 'Model configured for chat interactions' },
@@ -109,7 +96,6 @@ export function activate(context: vscode.ExtensionContext) {
 				return;
 			}
 
-			// 根据选择生成不同的模板内容
 			let templateContent = '';
 			switch (templateType.label) {
 				case 'Basic Model':
@@ -191,17 +177,14 @@ PARAMETER repeat_penalty 1.1`;
 					break;
 			}
 
-			// 构建文件名（自动添加.modelfile后缀）
 			const fullFileName = fileName.toLowerCase().endsWith('.modelfile') 
 				? fileName 
 				: `${fileName}.modelfile`;
 
-			// 构建完整的文件路径
 			const uri = vscode.Uri.file(
 				path.join(workspaceFolders[0].uri.fsPath, fullFileName)
 			);
 
-			// 检查文件是否已存在
 			try {
 				await vscode.workspace.fs.stat(uri);
 				const overwrite = await vscode.window.showWarningMessage(
@@ -213,10 +196,8 @@ PARAMETER repeat_penalty 1.1`;
 					return;
 				}
 			} catch (err) {
-				// 文件不存在，可以继续创建
 			}
 
-			// 写入文件
 			try {
 				await vscode.workspace.fs.writeFile(uri, Buffer.from(templateContent));
 				const doc = await vscode.workspace.openTextDocument(uri);
@@ -234,7 +215,6 @@ PARAMETER repeat_penalty 1.1`;
 				return;
 			}
 
-			// 查找所有 Modelfile
 			let allModelfiles: vscode.Uri[] = [];
 			for (const folder of workspaceFolders) {
 				const files = await findModelfiles(folder);
@@ -246,14 +226,12 @@ PARAMETER repeat_penalty 1.1`;
 				return;
 			}
 
-			// 创建 QuickPick 项目
 			const modelfileItems = allModelfiles.map(file => ({
 				label: path.basename(file.fsPath),
 				description: vscode.workspace.asRelativePath(file.fsPath),
 				uri: file
 			}));
 
-			// 让用户选择 Modelfile
 			const selectedModelfile = await vscode.window.showQuickPick(modelfileItems, {
 				placeHolder: 'Select a Modelfile',
 				title: 'Create Model from Modelfile'
@@ -263,7 +241,6 @@ PARAMETER repeat_penalty 1.1`;
 				return;
 			}
 
-			// 获取模型名称和标签
 			const modelNameInput = await vscode.window.showInputBox({
 				prompt: 'Enter model name and optional tag (e.g., mymodel:1.0)',
 				placeHolder: 'modelname[:tag]',
@@ -282,9 +259,8 @@ PARAMETER repeat_penalty 1.1`;
 				return;
 			}
 
-			// 创建输出通道
 			const outputChannel = OutputChannelManager.getInstance().getModelRunChannel();
-			outputChannel.clear(); // 清除之前的输出
+			outputChannel.clear();
 			outputChannel.show();
 
 			try {
@@ -337,17 +313,14 @@ PARAMETER repeat_penalty 1.1`;
 					stdio: ['pipe', 'pipe', 'pipe']
 				});
 
-				// 写入提示到标准输入
 				child.stdin.write(prompt + '\n');
 				child.stdin.end();
 
 				child.stdout.on('data', (data: Buffer) => {
-					// 直接输出流式响应
 					outputChannel.append(data.toString());
 				});
 
 				child.stderr.on('data', (data: Buffer) => {
-					// 完全忽略 stderr 输出
 				});
 
 				child.on('error', (error: Error) => {
@@ -363,11 +336,50 @@ PARAMETER repeat_penalty 1.1`;
 				const errorMessage = error instanceof Error ? error.message : String(error);
 				vscode.window.showErrorMessage(`Failed to run model: ${errorMessage}`);
 			}
+		}),
+
+		vscode.commands.registerCommand('ollama-modelfile.deleteModel', async () => {
+			try {
+				const { stdout } = await execAsync('ollama list');
+				const models = stdout.split('\n')
+					.filter(line => line.trim())
+					.map(line => line.split(' ')[0])
+					.filter(model => model && model !== 'NAME');
+
+				if (models.length === 0) {
+					vscode.window.showInformationMessage('No models available to delete');
+					return;
+				}
+
+				const selectedModel = await vscode.window.showQuickPick(models, {
+					placeHolder: 'Select a model to delete'
+				});
+
+				if (!selectedModel) {
+					return;
+				}
+
+				const confirmation = await vscode.window.showWarningMessage(
+					`Are you sure you want to delete model '${selectedModel}'?`,
+					'Yes',
+					'No'
+				);
+
+				if (confirmation !== 'Yes') {
+					return;
+				}
+
+				await execAsync(`ollama rm ${selectedModel}`);
+				vscode.window.showInformationMessage(`Model '${selectedModel}' has been deleted`);
+
+			} catch (error: unknown) {
+				const errorMessage = error instanceof Error ? error.message : String(error);
+				vscode.window.showErrorMessage(`Failed to delete model: ${errorMessage}`);
+			}
 		})
 	);
 }
 
-// This method is called when your extension is deactivated
 export function deactivate() {
 	OutputChannelManager.getInstance().dispose();
 }
