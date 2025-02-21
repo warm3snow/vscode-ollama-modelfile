@@ -24,7 +24,6 @@ async function findModelfiles(workspaceFolder: vscode.WorkspaceFolder): Promise<
 class OutputChannelManager {
 	private static instance: OutputChannelManager;
 	private modelRunChannel?: vscode.OutputChannel;
-	private modelRunVerboseChannel?: vscode.OutputChannel;
 
 	private constructor() {}
 
@@ -42,21 +41,10 @@ class OutputChannelManager {
 		return this.modelRunChannel;
 	}
 
-	getModelRunVerboseChannel(): vscode.OutputChannel {
-		if (!this.modelRunVerboseChannel) {
-			this.modelRunVerboseChannel = vscode.window.createOutputChannel('Ollama Model Run (Verbose)');
-		}
-		return this.modelRunVerboseChannel;
-	}
-
 	dispose() {
 		if (this.modelRunChannel) {
 			this.modelRunChannel.dispose();
 			this.modelRunChannel = undefined;
-		}
-		if (this.modelRunVerboseChannel) {
-			this.modelRunVerboseChannel.dispose();
-			this.modelRunVerboseChannel = undefined;
 		}
 	}
 }
@@ -450,98 +438,7 @@ PARAMETER repeat_penalty 1.1`;
 		}
 	});
 
-	// 修改 runModelVerbose 命令
-	let runModelVerbose = vscode.commands.registerCommand('ollama-modelfile.runModelVerbose', async () => {
-		try {
-			const { stdout } = await execAsync('ollama list');
-			const models = stdout.split('\n')
-				.filter(line => line.trim())
-				.map(line => line.split(' ')[0])
-				.filter(model => model && model !== 'NAME');
-
-			const selectedModel = await vscode.window.showQuickPick(models, {
-				placeHolder: 'Select a model to run'
-			});
-
-			if (!selectedModel) {
-				return;
-			}
-
-			const prompt = await vscode.window.showInputBox({
-				prompt: 'Enter your prompt',
-				placeHolder: 'e.g., What is the meaning of life?'
-			});
-
-			if (!prompt) {
-				return;
-			}
-
-			const outputChannel = OutputChannelManager.getInstance().getModelRunVerboseChannel();
-			outputChannel.clear();
-			outputChannel.show();
-			outputChannel.appendLine(`Running model ${selectedModel} in verbose mode...`);
-			outputChannel.appendLine(`Prompt: ${prompt}`);
-			outputChannel.appendLine('-------------------');
-
-			const { spawn } = require('child_process');
-			const child = spawn('ollama', ['run', selectedModel, prompt, '--verbose'], {
-				stdio: ['ignore', 'pipe', 'pipe'],
-				env: { ...process.env, LANG: 'en_US.UTF-8' }
-			});
-
-			return new Promise<void>((resolve, reject) => {
-				child.stdout.setEncoding('utf8');
-				child.stderr.setEncoding('utf8');
-
-				child.stdout.on('data', (data: string) => {
-					const text = cleanOutput(data.toString());
-					if (text) {
-						outputChannel.append(text);
-					}
-				});
-
-				child.stderr.on('data', (data: string) => {
-					const lines = data.toString().split('\n');
-					lines.forEach(line => {
-						if (line.trim() && !line.includes('think')) {
-							try {
-								const jsonData = JSON.parse(line);
-								outputChannel.appendLine(`Debug: ${JSON.stringify(jsonData, null, 2)}`);
-							} catch {
-								const text = cleanOutput(line);
-								if (text) {
-									outputChannel.append(text);
-								}
-							}
-						}
-					});
-				});
-
-				child.on('error', (error: Error) => {
-					outputChannel.appendLine(`Error: ${error.message}`);
-					reject(error);
-				});
-
-				child.on('close', (code: number) => {
-					outputChannel.appendLine('\n-------------------');
-					if (code === 0) {
-						outputChannel.appendLine('Process completed successfully.');
-						resolve();
-					} else {
-						const message = `Process exited with code ${code}`;
-						outputChannel.appendLine(`Error: ${message}`);
-						reject(new Error(message));
-					}
-				});
-			});
-
-		} catch (error: unknown) {
-			const errorMessage = error instanceof Error ? error.message : String(error);
-			vscode.window.showErrorMessage(`Failed to run model: ${errorMessage}`);
-		}
-	});
-
-	context.subscriptions.push(createModelfile, createModel, runModel, runModelVerbose);
+	context.subscriptions.push(createModelfile, createModel, runModel);
 }
 
 // This method is called when your extension is deactivated

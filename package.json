@@ -31,11 +31,6 @@
         "command": "ollama-modelfile.runModel",
         "title": "Run Model",
         "category": "Ollama Modelfile"
-      },
-      {
-        "command": "ollama-modelfile.runModelVerbose",
-        "title": "Run Model (Verbose)",
-        "category": "Ollama Modelfile"
       }
     ]
   },
