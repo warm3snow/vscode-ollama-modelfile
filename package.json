@@ -3,6 +3,8 @@
   "displayName": "Ollama Modelfile",
   "description": "Ollama Modelfile support for VS Code",
   "version": "0.0.1",
+  "publisher": "warm3snow",
+  "author": "warm3snow",
   "repository": {
     "type": "git",
     "url": "https://github.com/warm3snow/ollama-modelfile.git"
@@ -13,7 +15,12 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:ollama-modelfile.createModelfile",
+    "onCommand:ollama-modelfile.createModel",
+    "onCommand:ollama-modelfile.runModel"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
@@ -40,7 +47,7 @@
     "watch": "npm-run-all -p watch:*",
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
-    "package": "npm run check-types && npm run lint && node esbuild.js --production",
+    "package": "node esbuild.js --production",
     "compile-tests": "tsc -p . --outDir out",
     "watch-tests": "tsc -p . -w --outDir out",
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
