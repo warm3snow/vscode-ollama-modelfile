@@ -18,8 +18,24 @@
   "contributes": {
     "commands": [
       {
-        "command": "vscode-ollama-modelfile.helloWorld",
-        "title": "Hello World"
+        "command": "ollama-modelfile.createModelfile",
+        "title": "Create Modelfile Template",
+        "category": "Ollama Modelfile"
+      },
+      {
+        "command": "ollama-modelfile.createModel",
+        "title": "Create Model from Modelfile",
+        "category": "Ollama Modelfile"
+      },
+      {
+        "command": "ollama-modelfile.runModel",
+        "title": "Run Model",
+        "category": "Ollama Modelfile"
+      },
+      {
+        "command": "ollama-modelfile.runModelVerbose",
+        "title": "Run Model (Verbose)",
+        "category": "Ollama Modelfile"
       }
     ]
   },
@@ -49,5 +65,6 @@
     "typescript": "^5.7.3",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.1"
-  }
+  },
+  "license": "MIT"
 }
