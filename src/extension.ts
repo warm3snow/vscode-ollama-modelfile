@@ -20,6 +20,72 @@ async function findModelfiles(workspaceFolder: vscode.WorkspaceFolder): Promise<
 	return [...files, ...modelFiles];
 }
 
+// 在文件顶部添加 OutputChannel 管理类
+class OutputChannelManager {
+	private static instance: OutputChannelManager;
+	private modelRunChannel?: vscode.OutputChannel;
+	private modelRunVerboseChannel?: vscode.OutputChannel;
+
+	private constructor() {}
+
+	static getInstance(): OutputChannelManager {
+		if (!OutputChannelManager.instance) {
+			OutputChannelManager.instance = new OutputChannelManager();
+		}
+		return OutputChannelManager.instance;
+	}
+
+	getModelRunChannel(): vscode.OutputChannel {
+		if (!this.modelRunChannel) {
+			this.modelRunChannel = vscode.window.createOutputChannel('Ollama Model Run');
+		}
+		return this.modelRunChannel;
+	}
+
+	getModelRunVerboseChannel(): vscode.OutputChannel {
+		if (!this.modelRunVerboseChannel) {
+			this.modelRunVerboseChannel = vscode.window.createOutputChannel('Ollama Model Run (Verbose)');
+		}
+		return this.modelRunVerboseChannel;
+	}
+
+	dispose() {
+		if (this.modelRunChannel) {
+			this.modelRunChannel.dispose();
+			this.modelRunChannel = undefined;
+		}
+		if (this.modelRunVerboseChannel) {
+			this.modelRunVerboseChannel.dispose();
+			this.modelRunVerboseChannel = undefined;
+		}
+	}
+}
+
+// 修改清理文本的辅助函数
+function cleanOutput(text: string): string {
+	// 首先解码可能的 UTF-8 字节序列
+	let decodedText = text;
+	try {
+		const buffer = Buffer.from(text);
+		decodedText = buffer.toString('utf8');
+	} catch (e) {
+		// 如果解码失败，使用原始文本
+		decodedText = text;
+	}
+
+	return decodedText
+		// 移除 ANSI 转义序列
+		.replace(/\x1b\[[0-9;]*[mGKHF]/g, '')
+		// 移除其他控制字符
+		.replace(/[\x00-\x09\x0B-\x0C\x0E-\x1F\x7F]/g, '')
+		// 移除方括号及其内容
+		.replace(/\[(?:[^\]]*\[)*[^\]]*\]/g, '')
+		// 移除多余空格和换行
+		.replace(/\s+/g, ' ')
+		// 修剪首尾空白
+		.trim();
+}
+
 export function activate(context: vscode.ExtensionContext) {
 
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
@@ -244,7 +310,8 @@ PARAMETER repeat_penalty 1.1`;
 		}
 
 		// 创建输出通道
-		const outputChannel = vscode.window.createOutputChannel('Ollama Model Creation');
+		const outputChannel = OutputChannelManager.getInstance().getModelRunChannel();
+		outputChannel.clear(); // 清除之前的输出
 		outputChannel.show();
 
 		try {
@@ -261,9 +328,8 @@ PARAMETER repeat_penalty 1.1`;
 		}
 	});
 
-	// 运行模型的命令
+	// 修改 runModel 命令
 	let runModel = vscode.commands.registerCommand('ollama-modelfile.runModel', async () => {
-		// 获取可用的模型列表
 		try {
 			const { stdout } = await execAsync('ollama list');
 			const models = stdout.split('\n')
@@ -271,7 +337,6 @@ PARAMETER repeat_penalty 1.1`;
 				.map(line => line.split(' ')[0])
 				.filter(model => model && model !== 'NAME');
 
-			// 让用户选择模型
 			const selectedModel = await vscode.window.showQuickPick(models, {
 				placeHolder: 'Select a model to run'
 			});
@@ -280,7 +345,6 @@ PARAMETER repeat_penalty 1.1`;
 				return;
 			}
 
-			// 获取用户输入
 			const prompt = await vscode.window.showInputBox({
 				prompt: 'Enter your prompt',
 				placeHolder: 'e.g., What is the meaning of life?'
@@ -290,27 +354,103 @@ PARAMETER repeat_penalty 1.1`;
 				return;
 			}
 
-			// 创建输出通道
-			const outputChannel = vscode.window.createOutputChannel('Ollama Model Run');
+			const outputChannel = OutputChannelManager.getInstance().getModelRunChannel();
+			outputChannel.clear();
 			outputChannel.show();
+			outputChannel.appendLine(`Running model ${selectedModel}...`);
+			outputChannel.appendLine(`Prompt: ${prompt}`);
+			outputChannel.appendLine('-------------------');
 
-			// 运行模型
-			const child = exec(`ollama run ${selectedModel} "${prompt}"`);
-			
-			child.stdout?.on('data', (data) => {
-				outputChannel.append(data.toString());
+			const { spawn } = require('child_process');
+			const child = spawn('ollama', ['run', selectedModel, prompt], {
+				stdio: ['ignore', 'pipe', 'pipe'],
+				env: { 
+					...process.env, 
+					LANG: 'en_US.UTF-8',
+					LC_ALL: 'en_US.UTF-8',
+					PYTHONIOENCODING: 'UTF-8'
+				}
 			});
 
-			child.stderr?.on('data', (data) => {
-				outputChannel.append(`Error: ${data}`);
+			return new Promise<void>((resolve, reject) => {
+				let stdoutBuffer = '';
+				let stderrBuffer = '';
+
+				child.stdout.setEncoding('utf8');
+				child.stderr.setEncoding('utf8');
+
+				child.stdout.on('data', (data: string) => {
+					stdoutBuffer += data;
+					
+					// 按行处理
+					const lines = stdoutBuffer.split('\n');
+					stdoutBuffer = lines.pop() || '';  // 保留最后一个不完整的行
+
+					lines.forEach(line => {
+						const cleanedText = cleanOutput(line);
+						if (cleanedText) {
+							outputChannel.appendLine(cleanedText);
+						}
+					});
+				});
+
+				child.stderr.on('data', (data: string) => {
+					if (!data.includes('think')) {
+						stderrBuffer += data;
+						
+						const lines = stderrBuffer.split('\n');
+						stderrBuffer = lines.pop() || '';
+
+						lines.forEach(line => {
+							const cleanedText = cleanOutput(line);
+							if (cleanedText) {
+								outputChannel.appendLine(cleanedText);
+							}
+						});
+					}
+				});
+
+				child.on('error', (error: Error) => {
+					outputChannel.appendLine(`Error: ${error.message}`);
+					reject(error);
+				});
+
+				child.on('close', (code: number) => {
+					// 处理剩余的 stdout 缓冲区
+					if (stdoutBuffer) {
+						const cleanedText = cleanOutput(stdoutBuffer);
+						if (cleanedText) {
+							outputChannel.appendLine(cleanedText);
+						}
+					}
+					
+					// 处理剩余的 stderr 缓冲区
+					if (stderrBuffer) {
+						const cleanedText = cleanOutput(stderrBuffer);
+						if (cleanedText) {
+							outputChannel.appendLine(cleanedText);
+						}
+					}
+
+					outputChannel.appendLine('\n-------------------');
+					if (code === 0) {
+						outputChannel.appendLine('Process completed successfully.');
+						resolve();
+					} else {
+						const message = `Process exited with code ${code}`;
+						outputChannel.appendLine(`Error: ${message}`);
+						reject(new Error(message));
+					}
+				});
 			});
 
-		} catch (error: any) {
-			vscode.window.showErrorMessage(`Failed to run model: ${error.message}`);
+		} catch (error: unknown) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			vscode.window.showErrorMessage(`Failed to run model: ${errorMessage}`);
 		}
 	});
 
-	// 运行模型（详细模式）的命令
+	// 修改 runModelVerbose 命令
 	let runModelVerbose = vscode.commands.registerCommand('ollama-modelfile.runModelVerbose', async () => {
 		try {
 			const { stdout } = await execAsync('ollama list');
@@ -336,21 +476,68 @@ PARAMETER repeat_penalty 1.1`;
 				return;
 			}
 
-			const outputChannel = vscode.window.createOutputChannel('Ollama Model Run (Verbose)');
+			const outputChannel = OutputChannelManager.getInstance().getModelRunVerboseChannel();
+			outputChannel.clear();
 			outputChannel.show();
+			outputChannel.appendLine(`Running model ${selectedModel} in verbose mode...`);
+			outputChannel.appendLine(`Prompt: ${prompt}`);
+			outputChannel.appendLine('-------------------');
 
-			const child = exec(`ollama run ${selectedModel} "${prompt}" --verbose`);
-			
-			child.stdout?.on('data', (data) => {
-				outputChannel.append(data.toString());
+			const { spawn } = require('child_process');
+			const child = spawn('ollama', ['run', selectedModel, prompt, '--verbose'], {
+				stdio: ['ignore', 'pipe', 'pipe'],
+				env: { ...process.env, LANG: 'en_US.UTF-8' }
 			});
 
-			child.stderr?.on('data', (data) => {
-				outputChannel.append(`Debug: ${data}`);
+			return new Promise<void>((resolve, reject) => {
+				child.stdout.setEncoding('utf8');
+				child.stderr.setEncoding('utf8');
+
+				child.stdout.on('data', (data: string) => {
+					const text = cleanOutput(data.toString());
+					if (text) {
+						outputChannel.append(text);
+					}
+				});
+
+				child.stderr.on('data', (data: string) => {
+					const lines = data.toString().split('\n');
+					lines.forEach(line => {
+						if (line.trim() && !line.includes('think')) {
+							try {
+								const jsonData = JSON.parse(line);
+								outputChannel.appendLine(`Debug: ${JSON.stringify(jsonData, null, 2)}`);
+							} catch {
+								const text = cleanOutput(line);
+								if (text) {
+									outputChannel.append(text);
+								}
+							}
+						}
+					});
+				});
+
+				child.on('error', (error: Error) => {
+					outputChannel.appendLine(`Error: ${error.message}`);
+					reject(error);
+				});
+
+				child.on('close', (code: number) => {
+					outputChannel.appendLine('\n-------------------');
+					if (code === 0) {
+						outputChannel.appendLine('Process completed successfully.');
+						resolve();
+					} else {
+						const message = `Process exited with code ${code}`;
+						outputChannel.appendLine(`Error: ${message}`);
+						reject(new Error(message));
+					}
+				});
 			});
 
-		} catch (error: any) {
-			vscode.window.showErrorMessage(`Failed to run model: ${error.message}`);
+		} catch (error: unknown) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			vscode.window.showErrorMessage(`Failed to run model: ${errorMessage}`);
 		}
 	});
 
@@ -358,4 +545,6 @@ PARAMETER repeat_penalty 1.1`;
 }
 
 // This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() {
+	OutputChannelManager.getInstance().dispose();
+}
