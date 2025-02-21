@@ -1,65 +1,160 @@
-# Ollama Modelfile
+# VSCode Ollama Modelfile Extension
 
-VSCode extension for Ollama Modelfile support.
+<p align="center">
+  <img src="resources/logo.png" alt="VSCode Ollama Modelfile Logo" width="128"/>
+</p>
 
-## Features
+<p align="center">
+  <a href="https://marketplace.visualstudio.com/items?itemName=warm3snow.vscode-ollama-modelfile">
+    <img src="https://img.shields.io/visual-studio-marketplace/i/warm3snow.vscode-ollama-modelfile?logo=visual-studio-code" alt="Downloads"/>
+  </a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=warm3snow.vscode-ollama-modelfile">
+    <img src="https://img.shields.io/visual-studio-marketplace/r/warm3snow.vscode-ollama-modelfile?logo=visual-studio-code" alt="Rating"/>
+  </a>
+  <a href="https://github.com/warm3snow/vscode-ollama-modelfile">
+    <img src="https://img.shields.io/github/stars/warm3snow/vscode-ollama-modelfile?style=social" alt="GitHub stars"/>
+  </a>
+  <a href="https://github.com/warm3snow/vscode-ollama-modelfile/blob/main/LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"/>
+  </a>
+</p>
 
-* Syntax highlighting for Modelfile
-* Command snippets and autocompletion
-* Modelfile template creation
+[English](README.md) | [中文](README_CN.md)
 
-## Requirements
+A VS Code extension for managing Ollama models through Modelfile. Easily to edit Modelfile and generate models.
 
-* Visual Studio Code 1.80.0 or newer
+## ✨ Features
 
-## Usage
+- 🤖 This extension provides commands to help you manage Ollama models:
+    - **Set Ollama URL**: Configure Ollama server URL (default: http://localhost:11434)
+    - **Create Modelfile**: Create a new Modelfile template
+    - **Create Model**: Generate model from Modelfile
+    - **Run Model**: Execute model with current configuration
+    - **Delete Model**: Remove existing model
 
-1. Create a new file with name `Modelfile`
-2. Start typing Ollama commands to get autocompletion
-3. Use Command Palette to create new Modelfile from template
 
-## Extension Settings
+## 🚀 Quick Start
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+## 📺 Tutorial
 
-For example:
+1. **Install Ollama**
+   ```bash
+   # macOS
+   brew install ollama
 
-This extension contributes the following settings:
+   # Linux
+   curl -fsSL https://ollama.com/install.sh | sh
+   ```
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+2. **Install Extension**
+   - Open Extensions in VS Code
+   - Search for "VSCode Ollama Modelfile"
+   - Click Install
 
-## Known Issues
+3. **Configure Extension**
+   - Open Command Palette (Ctrl+Shift+P / Cmd+Shift+P)
+   - Run "Ollama Modelfile: Set Ollama URL"
+   - Enter your Ollama server URL
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+4. **Create Modelfile**
+   - Open in a workspace or folder
+   - Open Command Palette (Ctrl+Shift+P / Cmd+Shift+P)
+   - Run "Ollama Modelfile: Create Modelfile"
 
-## Release Notes
+5. **Create Model**
+   - Open Command Palette (Ctrl+Shift+P / Cmd+Shift+P)
+   - Run "Ollama Modelfile: Create Model"
+   - Select the Modelfile to use
 
-Users appreciate release notes as you update your extension.
+6. **Run Model**
+   - Open Command Palette (Ctrl+Shift+P / Cmd+Shift+P)
+   - Run "Ollama Modelfile: Run Model"
+   - Input the prompt
+   - Select the model to run
 
-### 0.0.1
+7. **Delete Model**
+   - Open Command Palette (Ctrl+Shift+P / Cmd+Shift+P)
+   - Run "Ollama Modelfile: Delete Model"
+   - Select the model to delete
 
-Initial release of ...
+## 📝 Usage
 
----
+### Commands
+- `Ollama Modelfile: Set Ollama URL` - Set the Ollama server URL
+- `Ollama Modelfile: Create Modelfile` - Create a new Modelfile template
+- `Ollama Modelfile: Create Model` - Generate model from Modelfile
+- `Ollama Modelfile: Run Model` - Execute model with current configuration
+- `Ollama Modelfile: Delete Model` - Remove existing model
 
-## Following extension guidelines
+## ❤️ Support & Donation
 
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
+If you find this extension helpful, you can support the developer by:
 
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
+<details>
+<summary>💰 Donation Methods</summary>
 
-## Working with Markdown
+<p align="center">Support the developer</p>
 
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
+<table>
+  <tr>
+    <td align="center">
+      <img src="resources/wechat.jpg" alt="WeChat Pay" width="240"/>
+      <br/>
+      WeChat Pay
+    </td>
+    <td align="center">
+      <img src="resources/alipay.jpg" alt="Alipay" width="240"/>
+      <br/>
+      Alipay
+    </td>
+  </tr>
+</table>
 
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
+### 🪙 Cryptocurrency
 
-## For more information
+<table>
+  <tr>
+    <td>
+      <b>Bitcoin</b>
+    </td>
+    <td>
+      <b>Native Segwit</b><br/>
+      <code>bc1qskds324wteq5kfmxh63g624htzwd34gky0f0q5</code>
+      <br/><br/>
+      <b>Taproot</b><br/>
+      <code>bc1pk0zud9csztjrkqew54v2nv7g3kq0xc2n80jatkmz9axkve4trfcqp0aksf</code>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <b>Ethereum</b>
+    </td>
+    <td>
+      <code>0xB0DA3bbC5e9f8C4b4A12d493A72c33dBDf1A9803</code>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <b>Solana</b>
+    </td>
+    <td>
+      <code>AMvPLymJm4TZZgvrYU7DCVn4uuzh6gfJiHWNK35gmUzd</code>
+    </td>
+  </tr>
+</table>
 
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+</details>
 
-**Enjoy!**
+Your support helps maintain and improve this extension! Thank you! ❤️
+- ⭐ Star the [GitHub repository](https://github.com/warm3snow/vscode-ollama-modelfile)
+- 📝 Submit issues or feedback
+- 🚀 Contribute to the codebase
+- 💬 Share with your friends
+
+## 📝 Release Notes
+
+See [CHANGELOG.md](CHANGELOG.md) for release notes.
+
+## 📝 License
+
+This extension is licensed under the [MIT License](LICENSE).
