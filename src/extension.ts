@@ -10,6 +10,16 @@ const execAsync = promisify(exec);
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
+async function findModelfiles(workspaceFolder: vscode.WorkspaceFolder): Promise<vscode.Uri[]> {
+	const pattern = new vscode.RelativePattern(workspaceFolder, '**/*.modelfile');
+	const files = await vscode.workspace.findFiles(pattern, '**/node_modules/**');
+	
+	// 也搜索名为 'Modelfile' 的文件（不带后缀）
+	const modelFiles = await vscode.workspace.findFiles(new vscode.RelativePattern(workspaceFolder, '**/Modelfile'), '**/node_modules/**');
+	
+	return [...files, ...modelFiles];
+}
+
 export function activate(context: vscode.ExtensionContext) {
 
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
@@ -64,25 +74,19 @@ export function activate(context: vscode.ExtensionContext) {
 		switch (templateType.label) {
 			case 'Basic Model':
 				templateContent = `# Basic Modelfile
-FROM llama2
-
-# Set your model name
-MODEL mymodel
-
-# Set system message
-SYSTEM """You are a helpful AI assistant."""
+FROM deepseek-r1:1.5b
 
 # Set basic parameters
 PARAMETER temperature 0.7
-PARAMETER num_ctx 4096`;
+PARAMETER num_ctx 4096
+
+# Set system message
+SYSTEM """You are a helpful AI assistant."""`;
 				break;
 
 			case 'Chat Assistant':
 				templateContent = `# Chat Assistant Modelfile
-FROM mistral
-
-# Set your model name
-MODEL mychatbot
+FROM deepseek-r1:1.5b
 
 # Configure the chat behavior
 SYSTEM """You are a friendly and helpful AI assistant. You provide clear, 
@@ -111,10 +115,7 @@ TEMPLATE """{{ if .System }}
 
 			case 'Custom Parameters':
 				templateContent = `# Advanced Parameters Modelfile
-FROM llama2
-
-# Set your model name
-MODEL myadvanced
+FROM deepseek-r1:1.5b
 
 # Comprehensive parameter configuration
 PARAMETER temperature 0.7    # Controls creativity (0.1-2.0)
@@ -132,10 +133,7 @@ SYSTEM """You are an AI assistant with advanced capabilities."""`;
 
 			case 'With Message History':
 				templateContent = `# Modelfile with Message History
-FROM llama2
-
-# Set your model name
-MODEL myconversational
+FROM deepseek-r1:1.5b
 
 # Configure base behavior
 SYSTEM """You are a helpful AI assistant with consistent response patterns."""
@@ -191,29 +189,57 @@ PARAMETER repeat_penalty 1.1`;
 
 	// 从 Modelfile 创建模型的命令
 	let createModel = vscode.commands.registerCommand('ollama-modelfile.createModel', async () => {
-		// 获取当前文件
-		const editor = vscode.window.activeTextEditor;
-		if (!editor) {
-			vscode.window.showErrorMessage('Please open a Modelfile first');
+		const workspaceFolders = vscode.workspace.workspaceFolders;
+		if (!workspaceFolders) {
+			vscode.window.showErrorMessage('Please open a workspace first');
 			return;
 		}
 
-		const filePath = editor.document.uri.fsPath;
-		const fileName = path.basename(filePath);
-		
-		// 检查是否是 Modelfile
-		if (fileName.toLowerCase() !== 'modelfile') {
-			vscode.window.showErrorMessage('Please open a Modelfile');
+		// 查找所有 Modelfile
+		let allModelfiles: vscode.Uri[] = [];
+		for (const folder of workspaceFolders) {
+			const files = await findModelfiles(folder);
+			allModelfiles = allModelfiles.concat(files);
+		}
+
+		if (allModelfiles.length === 0) {
+			vscode.window.showErrorMessage('No Modelfile found in workspace');
 			return;
 		}
 
-		// 获取模型名称
-		const modelName = await vscode.window.showInputBox({
-			prompt: 'Enter model name',
-			placeHolder: 'e.g., mychatbot'
+		// 创建 QuickPick 项目
+		const modelfileItems = allModelfiles.map(file => ({
+			label: path.basename(file.fsPath),
+			description: vscode.workspace.asRelativePath(file.fsPath),
+			uri: file
+		}));
+
+		// 让用户选择 Modelfile
+		const selectedModelfile = await vscode.window.showQuickPick(modelfileItems, {
+			placeHolder: 'Select a Modelfile',
+			title: 'Create Model from Modelfile'
 		});
 
-		if (!modelName) {
+		if (!selectedModelfile) {
+			return;
+		}
+
+		// 获取模型名称和标签
+		const modelNameInput = await vscode.window.showInputBox({
+			prompt: 'Enter model name and optional tag (e.g., mymodel:1.0)',
+			placeHolder: 'modelname[:tag]',
+			validateInput: (value) => {
+				if (!value) {
+					return 'Model name cannot be empty';
+				}
+				if (!/^[a-zA-Z0-9_-]+(?::[a-zA-Z0-9._-]+)?$/.test(value)) {
+					return 'Invalid model name format. Use modelname[:tag]';
+				}
+				return null;
+			}
+		});
+
+		if (!modelNameInput) {
 			return;
 		}
 
@@ -222,13 +248,13 @@ PARAMETER repeat_penalty 1.1`;
 		outputChannel.show();
 
 		try {
-			outputChannel.appendLine(`Creating model ${modelName}...`);
-			const { stdout, stderr } = await execAsync(`ollama create ${modelName} -f "${filePath}"`);
+			outputChannel.appendLine(`Creating model ${modelNameInput} from ${selectedModelfile.description}...`);
+			const { stdout, stderr } = await execAsync(`ollama create ${modelNameInput} -f "${selectedModelfile.uri.fsPath}"`);
 			outputChannel.appendLine(stdout);
 			if (stderr) {
 				outputChannel.appendLine(`Warnings: ${stderr}`);
 			}
-			vscode.window.showInformationMessage(`Model ${modelName} created successfully!`);
+			vscode.window.showInformationMessage(`Model ${modelNameInput} created successfully!`);
 		} catch (error: any) {
 			outputChannel.appendLine(`Error: ${error.message}`);
 			vscode.window.showErrorMessage(`Failed to create model: ${error.message}`);
