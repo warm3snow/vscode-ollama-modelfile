@@ -113,10 +113,15 @@ async function executeOllamaCommand(command: string): Promise<{ stdout: string; 
 }
 
 async function setOllamaUrl(context: vscode.ExtensionContext) {
+	// 从 globalState 获取上次保存的 URL
+	const savedUrl = context.globalState.get('ollamaUrl', 'http://localhost:11434');
+	// 同步 OllamaUrlManager 的状态
+	OllamaUrlManager.getInstance().setOllamaUrl(savedUrl);
+
 	const url = await vscode.window.showInputBox({
 		prompt: '请输入 Ollama URL',
 		placeHolder: 'http://localhost:11434',
-		value: context.globalState.get('ollamaUrl', 'http://localhost:11434')
+		value: savedUrl
 	});
 
 	if (url) {
@@ -143,6 +148,10 @@ async function setOllamaUrl(context: vscode.ExtensionContext) {
 }
 
 export function activate(context: vscode.ExtensionContext) {
+	// 在扩展激活时加载保存的 URL
+	const savedUrl = context.globalState.get('ollamaUrl', 'http://localhost:11434');
+	OllamaUrlManager.getInstance().setOllamaUrl(savedUrl);
+
 	console.log('Congratulations, your extension "vscode-ollama-modelfile" is now active!');
 
 	context.subscriptions.push(
