@@ -1,6 +1,6 @@
 #!/bin/bash
 
-extension_name="ollama-modelfile-0.0.1.vsix"
+extension_name="vscode-ollama-modelfile-1.0.0.vsix"
 
 # 打包扩展
 echo "Packaging extension..."

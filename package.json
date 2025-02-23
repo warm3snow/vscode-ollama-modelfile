@@ -1,8 +1,8 @@
 {
-  "name": "ollama-modelfile",
-  "displayName": "Ollama Modelfile",
-  "description": "Ollama Modelfile support for VS Code",
-  "version": "0.0.1",
+  "name": "vscode-ollama-modelfile",
+  "displayName": "VSCode Ollama Modelfile",
+  "description": "VSCode Ollama Modelfile support for VS Code",
+  "version": "1.0.0",
   "publisher": "warm3snow",
   "author": "warm3snow",
   "repository": {
@@ -13,7 +13,18 @@
     "vscode": "^1.97.0"
   },
   "categories": [
+    "AI",
+    "Programming Languages",
     "Other"
+  ],
+  "keywords": [
+    "Ollama",
+    "Modelfile",
+    "AI",
+    "ADAPTER",
+    "LLM",
+    "LLM Adapter",
+    "GGUF"
   ],
   "activationEvents": [
     "onStartupFinished"

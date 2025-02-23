@@ -61,30 +61,10 @@ A VS Code extension for managing Ollama models through Modelfile. Easily to edit
    - Open Command Palette (Ctrl+Shift+P / Cmd+Shift+P)
    - Run "Ollama Modelfile: Create Modelfile"
 
-5. **Create Model**
-   - Open Command Palette (Ctrl+Shift+P / Cmd+Shift+P)
-   - Run "Ollama Modelfile: Create Model"
-   - Select the Modelfile to use
-
-6. **Run Model**
-   - Open Command Palette (Ctrl+Shift+P / Cmd+Shift+P)
-   - Run "Ollama Modelfile: Run Model"
-   - Input the prompt
-   - Select the model to run
-
-7. **Delete Model**
-   - Open Command Palette (Ctrl+Shift+P / Cmd+Shift+P)
-   - Run "Ollama Modelfile: Delete Model"
-   - Select the model to delete
-
-## 📝 Usage
-
-### Commands
-- `Ollama Modelfile: Set Ollama URL` - Set the Ollama server URL
-- `Ollama Modelfile: Create Modelfile` - Create a new Modelfile template
-- `Ollama Modelfile: Create Model` - Generate model from Modelfile
-- `Ollama Modelfile: Run Model` - Execute model with current configuration
-- `Ollama Modelfile: Delete Model` - Remove existing model
+5. **Other Commands**
+  - `Ollama Modelfile: Create Model` - Generate model from Modelfile
+  - `Ollama Modelfile: Run Model` - Execute model with current configuration
+  - `Ollama Modelfile: Delete Model` - Remove existing model
 
 ## ❤️ Support & Donation
 

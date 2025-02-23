@@ -6,16 +6,16 @@
 
 <p align="center">
   <a href="https://marketplace.visualstudio.com/items?itemName=warm3snow.vscode-ollama-modelfile">
-    <img src="https://img.shields.io/visual-studio-marketplace/i/warm3snow.vscode-ollama-modelfile?logo=visual-studio-code" alt="下载量"/>
+    <img src="https://img.shields.io/visual-studio-marketplace/i/warm3snow.vscode-ollama-modelfile?logo=visual-studio-code" alt="Downloads"/>
   </a>
   <a href="https://marketplace.visualstudio.com/items?itemName=warm3snow.vscode-ollama-modelfile">
-    <img src="https://img.shields.io/visual-studio-marketplace/r/warm3snow.vscode-ollama-modelfile?logo=visual-studio-code" alt="评分"/>
+    <img src="https://img.shields.io/visual-studio-marketplace/r/warm3snow.vscode-ollama-modelfile?logo=visual-studio-code" alt="Rating"/>
   </a>
   <a href="https://github.com/warm3snow/vscode-ollama-modelfile">
-    <img src="https://img.shields.io/github/stars/warm3snow/vscode-ollama-modelfile?style=social" alt="GitHub 星标"/>
+    <img src="https://img.shields.io/github/stars/warm3snow/vscode-ollama-modelfile?style=social" alt="GitHub stars"/>
   </a>
   <a href="https://github.com/warm3snow/vscode-ollama-modelfile/blob/main/LICENSE">
-    <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="许可证: MIT"/>
+    <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"/>
   </a>
 </p>
 
@@ -60,30 +60,10 @@
    - 打开命令面板（Ctrl+Shift+P / Cmd+Shift+P）
    - 运行 "Ollama Modelfile: Create Modelfile"
 
-5. **创建模型**
-   - 打开命令面板（Ctrl+Shift+P / Cmd+Shift+P）
-   - 运行 "Ollama Modelfile: Create Model"
-   - 选择要使用的 Modelfile
-
-6. **运行模型**
-   - 打开命令面板（Ctrl+Shift+P / Cmd+Shift+P）
-   - 运行 "Ollama Modelfile: Run Model"
-   - 输入提示
-   - 选择要运行的模型
-
-7. **删除模型**
-   - 打开命令面板（Ctrl+Shift+P / Cmd+Shift+P）
-   - 运行 "Ollama Modelfile: Delete Model"
-   - 选择要删除的模型
-
-## 📝 使用说明
-
-### 命令
-- `Ollama Modelfile: Set Ollama URL` - 设置 Ollama 服务器 URL
-- `Ollama Modelfile: Create Modelfile` - 创建新的 Modelfile 模板
-- `Ollama Modelfile: Create Model` - 从 Modelfile 生成模型
-- `Ollama Modelfile: Run Model` - 使用当前配置执行模型
-- `Ollama Modelfile: Delete Model` - 移除现有模型
+5. **其他命令**
+  - `Ollama Modelfile: Create Model` - 从 Modelfile 生成模型
+  - `Ollama Modelfile: Run Model` - 使用当前配置执行模型
+  - `Ollama Modelfile: Delete Model` - 移除现有模型
 
 ## ❤️ 支持与捐赠
 
