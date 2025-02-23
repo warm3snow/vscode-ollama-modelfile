@@ -3,8 +3,11 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import * as https from 'https';
+import * as http from 'http';
 
 const execAsync = promisify(exec);
+const DEFAULT_SERVER_ADDRESS = 'http://localhost:11434';
 
 async function findModelfiles(workspaceFolder: vscode.WorkspaceFolder): Promise<vscode.Uri[]> {
 	const pattern = new vscode.RelativePattern(workspaceFolder, '**/*.modelfile');
@@ -52,6 +55,61 @@ function cleanOutput(text: string): string {
 		.replace(/\r/g, '')
 		.replace(/\u001b/g, '')
 		.replace(/\[25l|\[25h|\[2K|\[1G/g, '');
+}
+
+class OllamaUrlManager {
+	private static instance: OllamaUrlManager;
+	private ollamaUrl: string = DEFAULT_SERVER_ADDRESS;
+
+	private constructor() {}
+
+	static getInstance(): OllamaUrlManager {
+		if (!OllamaUrlManager.instance) {
+			OllamaUrlManager.instance = new OllamaUrlManager();
+		}
+		return OllamaUrlManager.instance;
+	}
+
+	getOllamaUrl(): string {
+		return this.ollamaUrl;
+	}
+
+	setOllamaUrl(url: string) {
+		this.ollamaUrl = url;
+	}
+}
+
+async function checkOllamaConnection(): Promise<boolean> {
+	try {
+		const ollamaUrl = OllamaUrlManager.getInstance().getOllamaUrl();
+		const url = new URL(`${ollamaUrl}/api/version`);
+		
+		return new Promise((resolve) => {
+			const requestModule = url.protocol === 'https:' ? https : http;
+			const req = requestModule.get(url, (res) => {
+				resolve(res.statusCode === 200);
+			});
+
+			req.on('error', () => {
+				resolve(false);
+			});
+
+			req.end();
+		});
+	} catch (error) {
+		return false;
+	}
+}
+
+async function executeOllamaCommand(command: string): Promise<{ stdout: string; stderr: string }> {
+	const isConnected = await checkOllamaConnection();
+	if (!isConnected) {
+		throw new Error(`无法连接到 Ollama 服务 (${OllamaUrlManager.getInstance().getOllamaUrl()})，请确认服务是否正常运行`);
+	}
+	
+	const ollamaUrl = OllamaUrlManager.getInstance().getOllamaUrl();
+	const fullCommand = `OLLAMA_HOST=${ollamaUrl} ${command}`;
+	return execAsync(fullCommand);
 }
 
 export function activate(context: vscode.ExtensionContext) {
@@ -268,7 +326,7 @@ PARAMETER repeat_penalty 1.1`;
 
 			try {
 				outputChannel.appendLine(`Creating model ${modelNameInput} from ${selectedModelfile.description}...`);
-				const { stdout, stderr } = await execAsync(`ollama create ${modelNameInput} -f "${selectedModelfile.uri.fsPath}"`);
+				const { stdout, stderr } = await executeOllamaCommand(`ollama create ${modelNameInput} -f "${selectedModelfile.uri.fsPath}"`);
 				outputChannel.appendLine(stdout);
 				if (stderr) {
 					outputChannel.appendLine(`Warnings: ${stderr}`);
@@ -282,7 +340,7 @@ PARAMETER repeat_penalty 1.1`;
 		
 		vscode.commands.registerCommand('ollama-modelfile.runModel', async () => {
 			try {
-				const { stdout } = await execAsync('ollama list');
+				const { stdout } = await executeOllamaCommand('ollama list');
 				const models = stdout.split('\n')
 					.filter(line => line.trim())
 					.map(line => line.split(' ')[0])
@@ -312,8 +370,10 @@ PARAMETER repeat_penalty 1.1`;
 				outputChannel.appendLine('-------------------\nResponse:');
 
 				const { spawn } = require('child_process');
+				const env = { ...process.env, OLLAMA_HOST: OllamaUrlManager.getInstance().getOllamaUrl() };
 				const child = spawn('ollama', ['run', selectedModel], {
-					stdio: ['pipe', 'pipe', 'pipe']
+					stdio: ['pipe', 'pipe', 'pipe'],
+					env
 				});
 
 				child.stdin.write(prompt + '\n');
@@ -343,7 +403,7 @@ PARAMETER repeat_penalty 1.1`;
 
 		vscode.commands.registerCommand('ollama-modelfile.deleteModel', async () => {
 			try {
-				const { stdout } = await execAsync('ollama list');
+				const { stdout } = await executeOllamaCommand('ollama list');
 				const models = stdout.split('\n')
 					.filter(line => line.trim())
 					.map(line => line.split(' ')[0])
@@ -372,12 +432,50 @@ PARAMETER repeat_penalty 1.1`;
 					return;
 				}
 
-				await execAsync(`ollama rm ${selectedModel}`);
+				await executeOllamaCommand(`ollama rm ${selectedModel}`);
 				vscode.window.showInformationMessage(`Model '${selectedModel}' has been deleted`);
 
 			} catch (error: unknown) {
 				const errorMessage = error instanceof Error ? error.message : String(error);
 				vscode.window.showErrorMessage(`Failed to delete model: ${errorMessage}`);
+			}
+		}),
+
+		vscode.commands.registerCommand('ollama-modelfile.setOllamaUrl', async () => {
+			const currentUrl = OllamaUrlManager.getInstance().getOllamaUrl();
+			
+			const url = await vscode.window.showInputBox({
+				prompt: 'Enter Ollama URL',
+				placeHolder: 'http://localhost:11434',
+				value: currentUrl,
+				validateInput: (value) => {
+					if (!value) {
+						return 'URL cannot be empty';
+					}
+					try {
+						new URL(value);
+						return null;
+					} catch {
+						return 'Please enter a valid URL';
+					}
+				}
+			});
+
+			if (url) {
+				// 临时设置URL以测试连接
+				const previousUrl = OllamaUrlManager.getInstance().getOllamaUrl();
+				OllamaUrlManager.getInstance().setOllamaUrl(url);
+				
+				const isConnected = await checkOllamaConnection();
+				if (!isConnected) {
+					// 如果连接失败，恢复之前的URL
+					OllamaUrlManager.getInstance().setOllamaUrl(previousUrl);
+					vscode.window.showErrorMessage(`无法连接到 Ollama 服务 (${url})，请确认服务是否正常运行`);
+					return;
+				}
+
+				// 连接成功，保持新URL
+				vscode.window.showInformationMessage(`Ollama URL 设置成功: ${url}`);
 			}
 		})
 	);
