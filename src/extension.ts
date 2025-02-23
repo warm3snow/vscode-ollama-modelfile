@@ -241,14 +241,22 @@ TEMPLATE """{{ if .System }}
 FROM deepseek-r1:1.5b
 
 # Comprehensive parameter configuration
-PARAMETER temperature 0.7    # Controls creativity (0.1-2.0)
-PARAMETER top_k 40          # Limits vocabulary diversity
-PARAMETER top_p 0.9         # Nucleus sampling threshold
-PARAMETER num_ctx 4096      # Context window size
-PARAMETER repeat_penalty 1.1 # Repetition penalty
-PARAMETER mirostat 1        # Sampling control (0,1,2)
-PARAMETER mirostat_tau 5.0  # Target entropy
-PARAMETER mirostat_eta 0.1  # Learning rate
+# Controls creativity (0.1-2.0)
+PARAMETER temperature 0.7
+# Limits vocabulary diversity
+PARAMETER top_k 40
+# Nucleus sampling threshold
+PARAMETER top_p 0.9
+# Context window size
+PARAMETER num_ctx 4096
+# Repetition penalty
+PARAMETER repeat_penalty 1.1
+# Sampling control (0,1,2)
+PARAMETER mirostat 1
+# Target entropy
+PARAMETER mirostat_tau 5.0
+# Learning rate
+PARAMETER mirostat_eta 0.1
 
 # System configuration
 SYSTEM """You are an AI assistant with advanced capabilities."""`;
