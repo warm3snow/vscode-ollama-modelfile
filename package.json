@@ -46,7 +46,19 @@
         "title": "Set Ollama URL",
         "category": "Ollama Modelfile"
       }
-    ]
+    ],
+    "languages": [{
+      "id": "modelfile",
+      "aliases": ["Modelfile", "modelfile"],
+      "extensions": [".modelfile"],
+      "filenames": ["Modelfile"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "modelfile",
+      "scopeName": "source.modelfile",
+      "path": "./syntaxes/modelfile.tmLanguage.json"
+    }]
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
