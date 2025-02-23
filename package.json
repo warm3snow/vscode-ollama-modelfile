@@ -4,6 +4,7 @@
   "description": "VSCode Ollama Modelfile support for VS Code",
   "version": "1.0.0",
   "publisher": "warm3snow",
+  "icon": "resources/logo.png",
   "author": "warm3snow",
   "repository": {
     "type": "git",
