@@ -112,6 +112,36 @@ async function executeOllamaCommand(command: string): Promise<{ stdout: string; 
 	return execAsync(fullCommand);
 }
 
+async function setOllamaUrl(context: vscode.ExtensionContext) {
+	const url = await vscode.window.showInputBox({
+		prompt: '请输入 Ollama URL',
+		placeHolder: 'http://localhost:11434',
+		value: context.globalState.get('ollamaUrl', 'http://localhost:11434')
+	});
+
+	if (url) {
+		try {
+			const tempUrlManager = OllamaUrlManager.getInstance();
+			const previousUrl = tempUrlManager.getOllamaUrl();
+			tempUrlManager.setOllamaUrl(url);
+
+			const isConnected = await checkOllamaConnection();
+			
+			if (!isConnected) {
+				tempUrlManager.setOllamaUrl(previousUrl);
+				throw new Error('连接测试失败');
+			}
+
+			await context.globalState.update('ollamaUrl', url);
+			vscode.window.showInformationMessage('Ollama URL 设置成功！');
+		} catch (error: unknown) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			vscode.window.showErrorMessage(`无法连接到 Ollama 服务: ${errorMessage}`);
+			return;
+		}
+	}
+}
+
 export function activate(context: vscode.ExtensionContext) {
 	console.log('Congratulations, your extension "vscode-ollama-modelfile" is now active!');
 
@@ -442,41 +472,7 @@ PARAMETER repeat_penalty 1.1`;
 		}),
 
 		vscode.commands.registerCommand('ollama-modelfile.setOllamaUrl', async () => {
-			const currentUrl = OllamaUrlManager.getInstance().getOllamaUrl();
-			
-			const url = await vscode.window.showInputBox({
-				prompt: 'Enter Ollama URL',
-				placeHolder: 'http://localhost:11434',
-				value: currentUrl,
-				validateInput: (value) => {
-					if (!value) {
-						return 'URL cannot be empty';
-					}
-					try {
-						new URL(value);
-						return null;
-					} catch {
-						return 'Please enter a valid URL';
-					}
-				}
-			});
-
-			if (url) {
-				// 临时设置URL以测试连接
-				const previousUrl = OllamaUrlManager.getInstance().getOllamaUrl();
-				OllamaUrlManager.getInstance().setOllamaUrl(url);
-				
-				const isConnected = await checkOllamaConnection();
-				if (!isConnected) {
-					// 如果连接失败，恢复之前的URL
-					OllamaUrlManager.getInstance().setOllamaUrl(previousUrl);
-					vscode.window.showErrorMessage(`无法连接到 Ollama 服务 (${url})，请确认服务是否正常运行`);
-					return;
-				}
-
-				// 连接成功，保持新URL
-				vscode.window.showInformationMessage(`Ollama URL 设置成功: ${url}`);
-			}
+			await setOllamaUrl(context);
 		})
 	);
 }
